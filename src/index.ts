@@ -1,78 +1,37 @@
+import { createTextData, getTextNode } from "./domains";
 import { closePluginWithNotify, nonNullable } from "./utils";
 import type { DataFromUI } from "./types";
 
 // show plugin ui, set config
-figma.showUI(__html__, { themeColors: true, width: 384, height: 424 });
+figma.showUI(__html__, { themeColors: true, width: 384, height: 456 });
 
-// utils
-const createTextData = (textNode: TextNode) => {
-  const data = {
-    nodeId: textNode.id,
-    characters: textNode.characters,
-    // 縦書きにするとwidthとheightの関係が反転するため
-    width: textNode.height,
-    height: textNode.width,
-    lineHeight: textNode.lineHeight,
-    letterSpacing: textNode.letterSpacing,
-    resizing: textNode.textAutoResize,
-    paragraphIndent: textNode.paragraphIndent,
-    paragraphSpacing: textNode.paragraphSpacing,
-  };
-  return data;
-};
-
+// 使用フォントの読み込み
+// Ref: https://www.figma.com/plugin-docs/working-with-text
 const loadFont = async (textNode: TextNode) => {
-  // 使用フォントの読み込み
-  // Ref: https://www.figma.com/plugin-docs/working-with-text
   await Promise.all(
     textNode.getRangeAllFontNames(0, 1).map(figma.loadFontAsync)
   );
 };
 
-// plugin main
-const main = async () => {
+/**
+ * Plugin first processing
+ */
+const onLoadPlugin = async () => {
   const selectionNodes = figma.currentPage.selection;
-  if (selectionNodes.length === 0) {
-    closePluginWithNotify("Node is not selected");
-    return;
-  }
+  if (selectionNodes.length === 0) return;
 
-  const originNode = selectionNodes[0];
-  const prevData = originNode.getPluginData(originNode.id);
+  const prevData = selectionNodes[0].getPluginData(selectionNodes[0].id);
   const hasPrevData = prevData !== "";
   const nodeTypes = selectionNodes.map((node) => node.type);
   // 前回プラグイン実行時のデータを持っているか、TextNodeが含まれている場合は処理を続行する
   if (!hasPrevData && !nodeTypes.includes("TEXT")) {
-    closePluginWithNotify("TextNode is not selected");
     return;
   }
 
-  let textNode: TextNode;
-  // Vertical Text WrapperのFrameかTextNodeかで分岐させる
-  if (originNode.type === "FRAME") {
-    const frameNode = originNode as FrameNode;
-    // ここまで処理が進んでいるならVertical Text Wrapperであると考えられる
-    const childHasTextNode = frameNode.children.find((nodes) => {
-      if (nodes.type !== "FRAME") {
-        return false;
-      }
-      return nodes.findChild(
-        (node) => node.type === "TEXT" && node.characters.length !== 0
-      );
-    }) as FrameNode;
-
-    const childTextNode = childHasTextNode.findChild((node) => {
-      return node.type === "TEXT";
-    }) as TextNode | null;
-
-    if (!childTextNode) return;
-    textNode = childTextNode;
-  } else {
-    // TODO: convert multiple text node
-    const textNodes = selectionNodes.filter(
-      (node) => node.type === "TEXT"
-    ) as TextNode[];
-    textNode = textNodes[0];
+  const textNode = getTextNode(selectionNodes);
+  if (!textNode) {
+    closePluginWithNotify("Unhandled Error: 1");
+    return;
   }
 
   await loadFont(textNode);
@@ -87,61 +46,57 @@ const main = async () => {
   figma.ui.postMessage(textData);
 };
 
-main();
+onLoadPlugin();
 
+/**
+ * On change selecting node event
+ */
 figma.on("selectionchange", async () => {
   const selectionNodes = figma.currentPage.selection;
   if (selectionNodes.length === 0) return;
 
+  const prevData = selectionNodes[0].getPluginData(selectionNodes[0].id);
+  const hasPrevData = prevData !== "";
   const nodeTypes = selectionNodes.map((node) => node.type);
-  if (!nodeTypes.includes("TEXT")) return;
+  // 前回プラグイン実行時のデータを持っているか、TextNodeが含まれている場合は処理を続行する
+  if (!hasPrevData && !nodeTypes.includes("TEXT")) {
+    return;
+  }
 
-  // TODO: convert multiple text node
-  const textNodes = selectionNodes.filter(
-    (node) => node.type === "TEXT"
-  ) as TextNode[];
+  const textNode = getTextNode(selectionNodes);
+  if (!textNode) {
+    closePluginWithNotify("Unhandled Error: 2");
+    return;
+  }
 
-  const textNode = textNodes[0];
   await loadFont(textNode);
+
+  if (hasPrevData) {
+    const textData = JSON.parse(prevData);
+    figma.ui.postMessage(textData);
+    return;
+  }
 
   const textData = createTextData(textNode);
   figma.ui.postMessage(textData);
 });
 
-// On Message
+/**
+ * On message from plugin UI
+ */
 figma.ui.on("message", async (event: { data?: DataFromUI }) => {
   const data = event.data;
   if (!data) return;
   if (!data.characters) return;
 
-  const originNode = figma.getNodeById(data.nodeId) as
-    | TextNode
-    | FrameNode
-    | null;
-  if (!originNode) return;
+  const refNode = figma.getNodeById(data.nodeId);
+  if (!refNode) return;
+  if (refNode.type !== "FRAME" && refNode.type !== "TEXT") return;
 
-  let textNode: TextNode;
-  // Vertical Text WrapperのFrameかTextNodeかで分岐させる
-  if (originNode.type === "FRAME") {
-    const frameNode = originNode as FrameNode;
-    // ここまで処理が進んでいるならVertical Text Wrapperであると考えられる
-    const childHasTextNode = frameNode.children.find((nodes) => {
-      if (nodes.type !== "FRAME") {
-        return false;
-      }
-      return nodes.findChild(
-        (node) => node.type === "TEXT" && node.characters.length !== 0
-      );
-    }) as FrameNode;
-
-    const childTextNode = childHasTextNode.findChild((node) => {
-      return node.type === "TEXT";
-    }) as TextNode | null;
-
-    if (!childTextNode) return;
-    textNode = childTextNode;
-  } else {
-    textNode = originNode as TextNode;
+  const textNode = getTextNode(refNode);
+  if (!textNode) {
+    closePluginWithNotify("Unhandled Error: 3");
+    return;
   }
 
   // cloneに備えてオリジナルのNodeを編集しておく
@@ -244,8 +199,8 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     frame.counterAxisSizingMode = data.height ? "FIXED" : "AUTO";
     frame.paddingLeft = 0;
     frame.paddingRight = 0;
-    frame.x = originNode.x;
-    frame.y = originNode.y;
+    frame.x = refNode.x;
+    frame.y = refNode.y;
     frame.fills = [];
     frame.resize(frame.width, data.height ?? frame.height);
     return frame;
@@ -334,7 +289,7 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
   textFrames.forEach((textFrame) => wrapperFrame.insertChild(0, textFrame));
 
   // オリジナルのNodeを削除
-  originNode.remove();
+  refNode.remove();
 
   // AutoLayoutFrameをフォーカスする
   figma.viewport.scrollAndZoomIntoView([wrapperFrame]);
@@ -346,6 +301,9 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
   figma.notify("Converted");
 });
 
+/**
+ * On move page
+ */
 figma.on("currentpagechange", () => {
-  closePluginWithNotify("Vertical Text plugin closed");
+  closePluginWithNotify("Closed plugin Vertja");
 });

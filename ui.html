@@ -88,16 +88,16 @@
     border: solid 1px var(--figma-color-border-onbrand);
     cursor: pointer;
   }
+  .button-action:hover {
+    background-color: var(--figma-color-bg-brand-hover);
+    color: var(--figma-color-text-onbrand);
+    border: solid 1px var(--figma-color-border-onbrand);
+  }
   .button-action:disabled {
     background-color: var(--figma-color-bg-disabled);
     color: var(--figma-color-text-disabled);
     border: solid 1px var(--figma-color-border-disabled);
     cursor: not-allowed;
-  }
-  .button-action:hover {
-    background-color: var(--figma-color-bg-brand-hover);
-    color: var(--figma-color-text-onbrand);
-    border: solid 1px var(--figma-color-border-onbrand);
   }
 
   input,
@@ -198,7 +198,7 @@
   </div>
 </div>
 
-<button id="ButtonAction" class="button-action" type="button">
+<button id="ButtonAction" class="button-action" type="button" disabled="true">
   Convert / Sync
 </button>
 
@@ -241,20 +241,13 @@
   const InputParagraphSpacing = document.getElementById(
     "InputParagraphSpacing"
   );
-  // const isButtonActionDisabled = ButtonAction.hasAttribute("disabled");
 
-  // if (!isButtonActionDisabled) {
-  //   ButtonAction.setAttribute("disabled", "true");
-  // } else {
-  //   ButtonAction.removeAttribute("disabled");
-  // }
-
-  let textNodeId = "";
+  let nodeId = "";
 
   // Ref: ./code.ts DataFromUI type
   const createDataForPlugin = () => {
     const data = {
-      nodeId: textNodeId,
+      nodeId: nodeId,
       characters: InputTextContent.value ?? null,
       width: InputWidth.value ? Number(InputWidth.value) : null,
       height: InputHeight.value ? Number(InputHeight.value) : null,
@@ -289,7 +282,7 @@
     const data = event.data.pluginMessage;
     if (!data) return;
 
-    textNodeId = data.nodeId;
+    nodeId = data.nodeId;
     InputTextContent.value = data.characters;
     // InputWidth.value =
     //   data.resizing === "HEIGHT" || data.resizing === "WIDTH_AND_HEIGHT"
@@ -305,5 +298,11 @@
       : null;
     InputParagraphIndent.value = Number(data.paragraphIndent.toFixed(3));
     InputParagraphSpacing.value = Number(data.paragraphSpacing.toFixed(3));
+
+    if (!nodeId) {
+      ButtonAction.setAttribute("disabled", "true");
+    } else {
+      ButtonAction.removeAttribute("disabled");
+    }
   };
 </script>
