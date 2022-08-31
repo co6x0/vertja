@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<style>
+  body {
+    font-family: Inter, sans-serif;
+    font-weight: 300;
+    background-color: var(--figma-color-bg);
+    color: var(--figma-color-text);
+    padding: 12px;
+  }
+
+  .plugin-divider {
+    display: block;
+    border: none;
+    border-bottom: solid 1px var(--figma-color-border);
+    margin: 20px 0;
+  }
+
+  .plugin-description {
+    color: var(--figma-color-text-secondary);
+    font-size: 0.7rem;
+  }
+  .plugin-description > a {
+    color: var(--figma-color-text-brand);
+  }
+
+  .node-design-ui {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: nowrap;
+  }
+  .node-design-ui.--with-textarea {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  .node-design-ui__textarea {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 12px;
+  }
+  .node-design-ui__number {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+  .node-design-ui__number > label,
+  .node-design-ui__textarea > label {
+    display: inline-block;
+    width: 88px;
+    flex-shrink: 0;
+    color: var(--figma-color-text-secondary);
+    font-size: 0.7rem;
+  }
+  .node-design-ui__number > p,
+  .node-design-ui__textarea > p {
+    display: inline-block;
+    color: var(--figma-color-text-primary);
+    font-size: 0.7rem;
+  }
+
+  .button-action {
+    margin-top: 20px;
+    font-size: 0.7rem;
+    width: 100%;
+    padding: 12px 8px;
+    border-radius: 5px;
+    background-color: var(--figma-color-bg-brand);
+    color: var(--figma-color-text-onbrand);
+    border: solid 1px var(--figma-color-border-onbrand);
+    cursor: pointer;
+  }
+  .button-action:disabled {
+    background-color: var(--figma-color-bg-disabled);
+    color: var(--figma-color-text-disabled);
+    border: solid 1px var(--figma-color-border-disabled);
+    cursor: not-allowed;
+  }
+  .button-action:hover {
+    background-color: var(--figma-color-bg-brand-hover);
+    color: var(--figma-color-text-onbrand);
+    border: solid 1px var(--figma-color-border-onbrand);
+  }
+
+  input,
+  textarea {
+    box-sizing: border-box;
+    font-size: 0.7rem;
+    color: var(--figma-color-text-primary);
+    width: 100%;
+    max-width: 100%;
+    padding: 12px 8px;
+    border: solid 1px transparent;
+    border-radius: 2px;
+    background: transparent;
+  }
+  textarea {
+    font-family: Inter, sans-serif;
+    border: solid 1px var(--figma-color-border);
+    border-radius: 2px;
+    padding: 8px;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--figma-color-text-tertiary);
+  }
+  input:hover,
+  textarea:hover {
+    border: solid 1px var(--figma-color-border);
+  }
+  input:focus,
+  textarea:focus {
+    outline: solid 2px var(--figma-color-border-selected);
+  }
+  input:disabled,
+  textarea:disabled {
+    color: var(--figma-color-text-disabled);
+    cursor: not-allowed;
+  }
+</style>
+
+<div class="node-design-ui --with-textarea">
+  <div class="node-design-ui__textarea">
+    <label for="InputTextContent">Text content</label>
+    <textarea
+      id="InputTextContent"
+      rows="5"
+      placeholder="Enter vertical text content..."
+      required
+    ></textarea>
+  </div>
+</div>
+
+<div class="node-design-ui">
+  <div class="node-design-ui__number">
+    <label for="InputWidth">Width</label>
+    <input
+      id="InputWidth"
+      placeholder="Auto"
+      type="number"
+      min="0"
+      required
+      disabled
+    />
+  </div>
+  <div class="node-design-ui__number">
+    <label for="InputHeight">Height</label>
+    <input id="InputHeight" placeholder="Auto" type="number" min="0" required />
+  </div>
+</div>
+
+<div class="node-design-ui">
+  <div class="node-design-ui__number">
+    <label for="InputLetterSpacing">Letter spacing</label>
+    <input id="InputLetterSpacing" placeholder="0" type="number" required />
+    <p>%</p>
+  </div>
+  <div class="node-design-ui__number">
+    <label for="InputLineHeight">Line height</label>
+    <!-- 計算ロジックが複雑になるのでひとまずmin: 100未満にならないようにする -->
+    <input
+      id="InputLineHeight"
+      placeholder="Auto"
+      type="number"
+      min="100"
+      required
+    />
+    <p>%</p>
+  </div>
+</div>
+
+<button id="ButtonAction" class="button-action" type="button" disabled="true">
+  Convert / Sync
+</button>
+
+<hr class="plugin-divider" />
+<p class="plugin-description">
+  Converts text <strong>layout</strong> for vertical writing. To make the glyphs
+  suitable for vertical writing, enable "Vertical alternates"
+  <a
+    href="https://help.figma.com/hc/en-us/articles/4913951097367-Use-OpenType-features"
+    target="_blank"
+    rel="noopener noreferrer"
+    >using OpenType features</a
+  >.
+</p>
+
+<script>
+  const ButtonAction = document.getElementById("ButtonAction");
+  const InputTextContent = document.getElementById("InputTextContent");
+  const InputWidth = document.getElementById("InputWidth");
+  const InputHeight = document.getElementById("InputHeight");
+  const InputLetterSpacing = document.getElementById("InputLetterSpacing");
+  const InputLineHeight = document.getElementById("InputLineHeight");
+  const isButtonActionDisabled = ButtonAction.hasAttribute("disabled");
+  let textNodeId = "";
+
+  if (!isButtonActionDisabled) {
+    ButtonAction.setAttribute("disabled", "true");
+  } else {
+    ButtonAction.removeAttribute("disabled");
+  }
+
+  const createDataForPlugin = () => {
+    const data = {
+      nodeId: textNodeId,
+      characters: InputTextContent.value ?? null,
+      width: InputWidth.value ? Number(InputWidth.value) : null,
+      height: InputHeight.value ? Number(InputHeight.value) : null,
+      letterSpacing: InputLetterSpacing.value
+        ? Number(InputLetterSpacing.value)
+        : 0,
+      lineHeight: InputLineHeight.value ? Number(InputLineHeight.value) : null,
+    };
+    return data;
+  };
+
+  InputTextContent.addEventListener("beforeinput", () => {
+    const data = createDataForPlugin();
+    // Ref: https://www.figma.com/plugin-docs/creating-ui/#non-null-origin-iframes
+    parent.postMessage(
+      {
+        pluginMessage: { data },
+        pluginId: "1146329653004129345",
+      },
+      "https://www.figma.com"
+    );
+  });
+
+  ButtonAction.addEventListener("click", () => {
+    const data = createDataForPlugin();
+    // Ref: https://www.figma.com/plugin-docs/creating-ui/#non-null-origin-iframes
+    parent.postMessage(
+      {
+        pluginMessage: { data },
+        pluginId: "1146329653004129345",
+      },
+      "https://www.figma.com"
+    );
+  });
+
+  onmessage = (event) => {
+    const data = event.data.pluginMessage;
+    if (!data) return;
+
+    // textAutoResize: 'NONE' | 'WIDTH_AND_HEIGHT' | 'HEIGHT' | 'TRUNCATE'
+    textNodeId = data.nodeId;
+    InputTextContent.value = data.characters;
+    // InputWidth.value =
+    //   data.resizing === "HEIGHT" || data.resizing === "WIDTH_AND_HEIGHT"
+    //     ? null
+    //     : data.height;
+    InputHeight.value =
+      data.resizing === "WIDTH_AND_HEIGHT" ? null : data.width;
+    InputLetterSpacing.value = data.letterSpacing.value
+      ? Number(data.letterSpacing.value.toFixed(1))
+      : null;
+    InputLineHeight.value = data.lineHeight.value
+      ? Number(data.lineHeight.value.toFixed(1))
+      : null;
+  };
+</script>
