@@ -163,6 +163,7 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
   if (data.height) {
     const height = data.height;
     const formattedTextLines = textLines.flatMap((textLine) => {
+      // インデントを含む1行あたりの最大文字数未満のテキストはそのまま返す
       if (textLine.length < maxWordPerLine(height, data.paragraphIndent))
         return textLine;
 
@@ -215,11 +216,56 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     return frame;
   };
 
+  // WIP
+  const height = data.height ?? 0;
+  const originTextLines = data.characters!.split("\n");
+  // インデントを含む1行あたりの最大文字数以上のテキストを抽出する
+  const aboveMaxWordTexts = originTextLines
+    .map((textLine) => {
+      if (textLine.length >= maxWordPerLine(height, data.paragraphIndent))
+        return textLine;
+    })
+    .filter(nonNullable);
+  // インデントを含む1行あたりの最大文字数未満のテキストを抽出する
+  const lessMaxWordTexts = originTextLines
+    .map((textLine) => {
+      if (textLine.length < maxWordPerLine(height, data.paragraphIndent))
+        return textLine;
+    })
+    .filter(nonNullable);
+  // 複数行を持つ段落の一番最後の行のテキストを抽出する
+  const multiLineLastTexts = aboveMaxWordTexts.map((text: string) => {
+    const lineCount = Math.ceil(text.length / maxWordPerLine(height, 0));
+    const lastLineStart = (lineCount - 1) * maxWordPerLine(height, 0);
+    const lastLineText = text.slice(lastLineStart, text.length);
+    return lastLineText;
+  });
+  // 一番最後の行はparagraphSpacingを適応しなくて良いので削除する
+  multiLineLastTexts.pop();
+
   const textFrames = textNodes.map((textNode, index) => {
     const frame = createAutoLayoutFrame();
     frame.name = String(index + 1);
 
-    if (data.lineHeight.value) {
+    // 段落の最後の行にparagraphSpacingを適応する
+    if (data.height && data.lineHeight.value && data.paragraphSpacing !== 0) {
+      const lineWidth = (nodeFontSize * data.lineHeight.value) / 100;
+      const frameHorizontalPadding = lineWidth - nodeFontSize;
+      // １行だけの段落
+      const isSingleLineText = lessMaxWordTexts.some(
+        (singleLineText) => singleLineText === textNode.characters
+      );
+      const isLastLineText = multiLineLastTexts.some(
+        (lastLineText) => lastLineText === textNode.characters
+      );
+
+      if (isSingleLineText || isLastLineText) {
+        frame.paddingLeft = frameHorizontalPadding / 2 + data.paragraphSpacing;
+      } else {
+        frame.paddingLeft = frameHorizontalPadding / 2;
+        frame.paddingRight = frameHorizontalPadding / 2;
+      }
+    } else if (data.lineHeight.value) {
       const lineWidth = (nodeFontSize * data.lineHeight.value) / 100;
       const frameHorizontalPadding = lineWidth - nodeFontSize;
       frame.paddingLeft = frameHorizontalPadding / 2;
