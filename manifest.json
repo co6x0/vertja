@@ -1,12 +1,11 @@
 {
   "name": "Vertical Text",
   "id": "1146329653004129345",
-  "api": "0.1.0",
+  "api": "1.0.0",
   "main": "code.js",
   "editorType": ["figma"],
   "ui": "ui.html",
   "relaunchButtons": [
-    { "command": "edit", "name": "Edit shape" },
-    { "command": "open", "name": "Open Shaper", "multipleSelection": true }
+    { "command": "edit", "name": "Edit Vertical Text Settings" }
   ]
 }

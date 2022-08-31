@@ -8,12 +8,26 @@ const hasProperty = <K extends keyof T, T extends Record<string, unknown>>(
 const nonNullable = <T>(value: T): value is NonNullable<T> => value != null;
 
 // show plugin ui, set config
-figma.showUI(__html__, { themeColors: true, width: 384, height: 400 });
+figma.showUI(__html__, { themeColors: true, width: 384, height: 424 });
 
 // utils
 const closePluginWithNotify = (message: string) => {
   figma.notify(message);
   figma.closePlugin();
+};
+
+const createTextData = (textNode: TextNode) => {
+  const data = {
+    nodeId: textNode.id,
+    characters: textNode.characters,
+    // 縦書きにするとwidthとheightの関係が反転するため
+    width: textNode.height,
+    height: textNode.width,
+    lineHeight: textNode.lineHeight,
+    letterSpacing: textNode.letterSpacing,
+    resizing: textNode.textAutoResize,
+  };
+  return data;
 };
 
 // plugin main
@@ -24,9 +38,18 @@ const main = async () => {
     return;
   }
 
+  const prevData = selectionNodes[0].getPluginData(selectionNodes[0].id);
+  const hasPrevData = prevData !== "";
   const nodeTypes = selectionNodes.map((node) => node.type);
-  if (!nodeTypes.includes("TEXT")) {
+  // 前回プラグイン実行時のデータを持っている場合は処理を続行する
+  if (!hasPrevData && !nodeTypes.includes("TEXT")) {
     closePluginWithNotify("TextNode is not selected");
+    return;
+  }
+
+  if (hasPrevData) {
+    const textData = JSON.parse(prevData);
+    figma.ui.postMessage(textData);
     return;
   }
 
@@ -35,16 +58,7 @@ const main = async () => {
     (node) => node.type === "TEXT"
   ) as TextNode[];
   const textNode = textNodes[0];
-
-  const textData = {
-    nodeId: textNode.id,
-    characters: textNode.characters,
-    width: textNode.width,
-    height: textNode.height,
-    lineHeight: textNode.lineHeight,
-    letterSpacing: textNode.letterSpacing,
-    resizing: textNode.textAutoResize,
-  };
+  const textData = createTextData(textNode);
 
   figma.ui.postMessage(textData);
 };
@@ -63,16 +77,7 @@ figma.on("selectionchange", () => {
     (node) => node.type === "TEXT"
   ) as TextNode[];
   const textNode = textNodes[0];
-
-  const textData = {
-    nodeId: textNode.id,
-    characters: textNode.characters,
-    width: textNode.width,
-    height: textNode.height,
-    lineHeight: textNode.lineHeight,
-    letterSpacing: textNode.letterSpacing,
-    resizing: textNode.textAutoResize,
-  };
+  const textData = createTextData(textNode);
 
   figma.ui.postMessage(textData);
 });
@@ -83,42 +88,64 @@ type DataFromUI = {
   characters?: string;
   width?: number;
   height?: number;
-  lineHeight?: number;
-  letterSpacing: number;
+  lineHeight: {
+    value?: number;
+    unit: "PERCENT";
+  };
+  letterSpacing: {
+    value: number;
+    unit: "PERCENT";
+  };
+  resizing?: "WIDTH_AND_HEIGHT";
 };
 figma.ui.on("message", async (event: { data?: DataFromUI }) => {
-  console.log("on message");
-  const _selection = figma.currentPage.selection;
-  console.log(_selection[0].getPluginData("test"));
-
   const data = event.data;
   if (!data) return;
-
-  const node = figma.getNodeById(data.nodeId) as TextNode | null;
-  if (!node) return;
-
   if (!data.characters) return;
+
+  const originNode = figma.getNodeById(data.nodeId) as
+    | TextNode
+    | FrameNode
+    | null;
+  if (!originNode) return;
+
+  let textNode: TextNode;
+  // Vertical Text WrapperのFrameかTextNodeかで分岐させる
+  if (originNode.type === "FRAME") {
+    const frameNode = originNode as FrameNode;
+    // ここまで処理が進んでいるならVertical Text Wrapperであると考えられるので、最初の子Frameだけ抽出する
+    const firstChild = frameNode.children[0] as FrameNode;
+    const childTextNode = firstChild.findChild((node) => {
+      return node.type === "TEXT";
+    }) as TextNode | null;
+    if (!childTextNode) return;
+    textNode = childTextNode;
+  } else {
+    textNode = originNode as TextNode;
+  }
 
   // cloneに備えてオリジナルのNodeを編集しておく
   // 使用フォントの読み込み
   await Promise.all(
-    node
-      .getRangeAllFontNames(0, node.characters.length)
+    textNode
+      .getRangeAllFontNames(0, textNode.characters.length)
       .map(figma.loadFontAsync)
   );
 
   const convertLetterSpacingToLineHeight = (letterSpacing: number) => {
     return 100 + letterSpacing;
   };
-  node.lineHeight = {
+  textNode.lineHeight = {
     unit: "PERCENT",
-    value: convertLetterSpacingToLineHeight(data.letterSpacing),
+    value: convertLetterSpacingToLineHeight(data.letterSpacing.value),
   };
 
   // data.charactersの行ごとにTextNodeを分割する
-  const nodeFontSize = node.fontSize as number;
+  const nodeFontSize = textNode.fontSize as number;
   let textLines = data.characters.split("\n");
-  const wordHeight = (nodeFontSize * node.lineHeight.value) / 100;
+  const wordHeight = Math.round(
+    (nodeFontSize * textNode.lineHeight.value) / 100
+  );
 
   // heightに応じてtextLinesをより細かく分割する
   if (data.height) {
@@ -143,7 +170,7 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
   }
 
   const textNodes = textLines.map((textLine) => {
-    const clonedNode = node.clone();
+    const clonedNode = textNode.clone();
     clonedNode.textAutoResize = "HEIGHT";
     clonedNode.characters = textLine;
     clonedNode.resize(nodeFontSize, clonedNode.height);
@@ -160,8 +187,8 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     frame.counterAxisSizingMode = data.height ? "FIXED" : "AUTO";
     frame.paddingLeft = 0;
     frame.paddingRight = 0;
-    frame.x = node.x;
-    frame.y = node.y;
+    frame.x = originNode.x;
+    frame.y = originNode.y;
     frame.fills = [];
     frame.resize(frame.width, data.height ?? frame.height);
     return frame;
@@ -171,8 +198,8 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     const frame = createAutoLayoutFrame();
     frame.name = String(index + 1);
 
-    if (data.lineHeight) {
-      const lineWidth = (nodeFontSize * data.lineHeight) / 100;
+    if (data.lineHeight.value) {
+      const lineWidth = (nodeFontSize * data.lineHeight.value) / 100;
       const frameHorizontalPadding = lineWidth - nodeFontSize;
       frame.paddingLeft = frameHorizontalPadding / 2;
       frame.paddingRight = frameHorizontalPadding / 2;
@@ -184,15 +211,23 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
 
   // すべてのtextFrameを1つのAutoLayoutFrameで包む
   const wrapperFrame = createAutoLayoutFrame();
+  data.nodeId = wrapperFrame.id;
   wrapperFrame.name = "Vertical Text Wrapper";
-  wrapperFrame.setPluginData("test", "hi");
+  wrapperFrame.setPluginData(wrapperFrame.id, JSON.stringify(data));
+  wrapperFrame.setRelaunchData({
+    edit: "Adjust the settings for vertically written text",
+  });
   textFrames.forEach((textFrame) => wrapperFrame.insertChild(0, textFrame));
 
   // オリジナルのNodeを削除
-  node.remove();
+  originNode.remove();
 
+  // AutoLayoutFrameをフォーカスする
   figma.viewport.scrollAndZoomIntoView([wrapperFrame]);
   figma.currentPage.selection = [wrapperFrame];
+
+  // data.nodeIdを上で更新しているのでUI側にも反映させる
+  figma.ui.postMessage(data);
 
   figma.notify("Converted");
 });
