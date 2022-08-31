@@ -2,7 +2,7 @@
   "name": "Vertical Japanese",
   "id": "1146329653004129345",
   "api": "1.0.0",
-  "main": "code.js",
+  "main": "index.js",
   "editorType": ["figma"],
   "ui": "ui.html",
   "relaunchButtons": [

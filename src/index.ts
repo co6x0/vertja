@@ -1,40 +1,10 @@
-// types
-type DataFromUI = {
-  nodeId: string;
-  characters?: string;
-  width?: number;
-  height?: number;
-  lineHeight: {
-    value?: number;
-    unit: "PERCENT";
-  };
-  letterSpacing: {
-    value: number;
-    unit: "PERCENT";
-  };
-  resizing?: "WIDTH_AND_HEIGHT";
-  paragraphIndent: number;
-  paragraphSpacing: number;
-};
-
-// type guards
-const hasProperty = <K extends keyof T, T extends Record<string, unknown>>(
-  object: T,
-  key: K
-): boolean => {
-  return !!object && Object.prototype.hasOwnProperty.call(object, key);
-};
-const nonNullable = <T>(value: T): value is NonNullable<T> => value != null;
+import { closePluginWithNotify, nonNullable } from "./utils";
+import type { DataFromUI } from "./types";
 
 // show plugin ui, set config
 figma.showUI(__html__, { themeColors: true, width: 384, height: 424 });
 
 // utils
-const closePluginWithNotify = (message: string) => {
-  figma.notify(message);
-  figma.closePlugin();
-};
-
 const createTextData = (textNode: TextNode) => {
   const data = {
     nodeId: textNode.id,
