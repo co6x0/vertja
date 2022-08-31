@@ -198,7 +198,7 @@
   </div>
 </div>
 
-<button id="ButtonAction" class="button-action" type="button" disabled="true">
+<button id="ButtonAction" class="button-action" type="button">
   Convert / Sync
 </button>
 
@@ -237,15 +237,21 @@
   const InputHeight = document.getElementById("InputHeight");
   const InputLetterSpacing = document.getElementById("InputLetterSpacing");
   const InputLineHeight = document.getElementById("InputLineHeight");
-  const isButtonActionDisabled = ButtonAction.hasAttribute("disabled");
+  const InputParagraphIndent = document.getElementById("InputParagraphIndent");
+  const InputParagraphSpacing = document.getElementById(
+    "InputParagraphSpacing"
+  );
+  // const isButtonActionDisabled = ButtonAction.hasAttribute("disabled");
+
+  // if (!isButtonActionDisabled) {
+  //   ButtonAction.setAttribute("disabled", "true");
+  // } else {
+  //   ButtonAction.removeAttribute("disabled");
+  // }
+
   let textNodeId = "";
 
-  if (!isButtonActionDisabled) {
-    ButtonAction.setAttribute("disabled", "true");
-  } else {
-    ButtonAction.removeAttribute("disabled");
-  }
-
+  // Ref: ./code.ts DataFromUI type
   const createDataForPlugin = () => {
     const data = {
       nodeId: textNodeId,
@@ -261,6 +267,8 @@
         unit: "PERCENT",
       },
       resizing: InputHeight.value ? null : "WIDTH_AND_HEIGHT",
+      paragraphIndent: Number(InputParagraphIndent.value) ?? 0,
+      paragraphSpacing: Number(InputParagraphSpacing.value) ?? 0,
     };
     return data;
   };
@@ -302,10 +310,12 @@
     InputHeight.value =
       data.resizing === "WIDTH_AND_HEIGHT" ? null : data.height;
     InputLetterSpacing.value = data.letterSpacing.value
-      ? Number(data.letterSpacing.value.toFixed(1))
+      ? Number(data.letterSpacing.value.toFixed(3))
       : null;
     InputLineHeight.value = data.lineHeight.value
-      ? Number(data.lineHeight.value.toFixed(1))
+      ? Number(data.lineHeight.value.toFixed(3))
       : null;
+    InputParagraphIndent.value = Number(data.paragraphIndent.toFixed(3));
+    InputParagraphSpacing.value = Number(data.paragraphSpacing.toFixed(3));
   };
 </script>

@@ -1,3 +1,22 @@
+// types
+type DataFromUI = {
+  nodeId: string;
+  characters?: string;
+  width?: number;
+  height?: number;
+  lineHeight: {
+    value?: number;
+    unit: "PERCENT";
+  };
+  letterSpacing: {
+    value: number;
+    unit: "PERCENT";
+  };
+  resizing?: "WIDTH_AND_HEIGHT";
+  paragraphIndent: number;
+  paragraphSpacing: number;
+};
+
 // type guards
 const hasProperty = <K extends keyof T, T extends Record<string, unknown>>(
   object: T,
@@ -26,6 +45,8 @@ const createTextData = (textNode: TextNode) => {
     lineHeight: textNode.lineHeight,
     letterSpacing: textNode.letterSpacing,
     resizing: textNode.textAutoResize,
+    paragraphIndent: textNode.paragraphIndent,
+    paragraphSpacing: textNode.paragraphSpacing,
   };
   return data;
 };
@@ -83,21 +104,6 @@ figma.on("selectionchange", () => {
 });
 
 // On Message
-type DataFromUI = {
-  nodeId: string;
-  characters?: string;
-  width?: number;
-  height?: number;
-  lineHeight: {
-    value?: number;
-    unit: "PERCENT";
-  };
-  letterSpacing: {
-    value: number;
-    unit: "PERCENT";
-  };
-  resizing?: "WIDTH_AND_HEIGHT";
-};
 figma.ui.on("message", async (event: { data?: DataFromUI }) => {
   const data = event.data;
   if (!data) return;
@@ -126,6 +132,7 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
 
   // cloneに備えてオリジナルのNodeを編集しておく
   // 使用フォントの読み込み
+  // Ref: https://www.figma.com/plugin-docs/working-with-text
   await Promise.all(
     textNode
       .getRangeAllFontNames(0, textNode.characters.length)
@@ -139,6 +146,7 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     unit: "PERCENT",
     value: convertLetterSpacingToLineHeight(data.letterSpacing.value),
   };
+  textNode.paragraphIndent = 0;
 
   // data.charactersの行ごとにTextNodeを分割する
   const nodeFontSize = textNode.fontSize as number;
@@ -148,18 +156,31 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
   );
 
   // heightに応じてtextLinesをより細かく分割する
-  if (data.height) {
-    const maxWordPerLine = Math.floor(data.height / wordHeight);
-    const formattedTextLines = textLines.flatMap((textLine) => {
-      if (textLine.length < maxWordPerLine) return textLine;
+  const maxWordPerLine = (height: number, indent: number) => {
+    return Math.floor((height - indent) / wordHeight);
+  };
 
-      const lineCount = Math.ceil(textLine.length / maxWordPerLine);
+  if (data.height) {
+    const height = data.height;
+    const formattedTextLines = textLines.flatMap((textLine) => {
+      if (textLine.length < maxWordPerLine(height, data.paragraphIndent))
+        return textLine;
+
+      const indentWordCount = Math.floor(wordHeight / data.paragraphIndent);
+      const lineCount = Math.ceil(
+        (textLine.length + indentWordCount) / maxWordPerLine(height, 0)
+      );
 
       let newLines = [];
       for (let i = 0; i < lineCount; i++) {
+        const wordCount = (index: number) => {
+          return index === 0
+            ? maxWordPerLine(height, data.paragraphIndent)
+            : maxWordPerLine(height, 0);
+        };
         const sliceLine = textLine.slice(
-          maxWordPerLine * i,
-          maxWordPerLine * (i + 1)
+          wordCount(i) * i,
+          wordCount(i) * (i + 1)
         );
         newLines.push(sliceLine);
       }
@@ -203,6 +224,18 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
       const frameHorizontalPadding = lineWidth - nodeFontSize;
       frame.paddingLeft = frameHorizontalPadding / 2;
       frame.paddingRight = frameHorizontalPadding / 2;
+    }
+
+    if (data.height && data.paragraphIndent !== 0) {
+      // インデント込の1行あたりの文字数が同じ場合インデント分のpaddingを追加する
+      if (
+        textNode.characters.length ===
+        maxWordPerLine(data.height, data.paragraphIndent)
+      ) {
+        frame.paddingTop = data.paragraphIndent;
+      }
+    } else if (data.paragraphIndent !== 0) {
+      frame.paddingTop = data.paragraphIndent;
     }
 
     frame.appendChild(textNode);
