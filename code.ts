@@ -325,6 +325,7 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
 
       if (isSingleLineText || isLastLineText) {
         frame.paddingLeft = frameHorizontalPadding / 2 + data.paragraphSpacing;
+        frame.paddingRight = frameHorizontalPadding / 2;
       } else {
         frame.paddingLeft = frameHorizontalPadding / 2;
         frame.paddingRight = frameHorizontalPadding / 2;
