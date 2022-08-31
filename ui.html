@@ -273,18 +273,6 @@
     return data;
   };
 
-  InputTextContent.addEventListener("beforeinput", () => {
-    const data = createDataForPlugin();
-    // Ref: https://www.figma.com/plugin-docs/creating-ui/#non-null-origin-iframes
-    parent.postMessage(
-      {
-        pluginMessage: { data },
-        pluginId: "1146329653004129345",
-      },
-      "https://www.figma.com"
-    );
-  });
-
   ButtonAction.addEventListener("click", () => {
     const data = createDataForPlugin();
     // Ref: https://www.figma.com/plugin-docs/creating-ui/#non-null-origin-iframes

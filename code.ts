@@ -51,6 +51,14 @@ const createTextData = (textNode: TextNode) => {
   return data;
 };
 
+const loadFont = async (textNode: TextNode) => {
+  // 使用フォントの読み込み
+  // Ref: https://www.figma.com/plugin-docs/working-with-text
+  await Promise.all(
+    textNode.getRangeAllFontNames(0, 1).map(figma.loadFontAsync)
+  );
+};
+
 // plugin main
 const main = async () => {
   const selectionNodes = figma.currentPage.selection;
@@ -59,14 +67,45 @@ const main = async () => {
     return;
   }
 
-  const prevData = selectionNodes[0].getPluginData(selectionNodes[0].id);
+  const originNode = selectionNodes[0];
+  const prevData = originNode.getPluginData(originNode.id);
   const hasPrevData = prevData !== "";
   const nodeTypes = selectionNodes.map((node) => node.type);
-  // 前回プラグイン実行時のデータを持っている場合は処理を続行する
+  // 前回プラグイン実行時のデータを持っているか、TextNodeが含まれている場合は処理を続行する
   if (!hasPrevData && !nodeTypes.includes("TEXT")) {
     closePluginWithNotify("TextNode is not selected");
     return;
   }
+
+  let textNode: TextNode;
+  // Vertical Text WrapperのFrameかTextNodeかで分岐させる
+  if (originNode.type === "FRAME") {
+    const frameNode = originNode as FrameNode;
+    // ここまで処理が進んでいるならVertical Text Wrapperであると考えられる
+    const childHasTextNode = frameNode.children.find((nodes) => {
+      if (nodes.type !== "FRAME") {
+        return false;
+      }
+      return nodes.findChild(
+        (node) => node.type === "TEXT" && node.characters.length !== 0
+      );
+    }) as FrameNode;
+
+    const childTextNode = childHasTextNode.findChild((node) => {
+      return node.type === "TEXT";
+    }) as TextNode | null;
+
+    if (!childTextNode) return;
+    textNode = childTextNode;
+  } else {
+    // TODO: convert multiple text node
+    const textNodes = selectionNodes.filter(
+      (node) => node.type === "TEXT"
+    ) as TextNode[];
+    textNode = textNodes[0];
+  }
+
+  await loadFont(textNode);
 
   if (hasPrevData) {
     const textData = JSON.parse(prevData);
@@ -74,19 +113,13 @@ const main = async () => {
     return;
   }
 
-  // TODO: convert multiple text node
-  const textNodes = selectionNodes.filter(
-    (node) => node.type === "TEXT"
-  ) as TextNode[];
-  const textNode = textNodes[0];
   const textData = createTextData(textNode);
-
   figma.ui.postMessage(textData);
 };
 
 main();
 
-figma.on("selectionchange", () => {
+figma.on("selectionchange", async () => {
   const selectionNodes = figma.currentPage.selection;
   if (selectionNodes.length === 0) return;
 
@@ -97,9 +130,11 @@ figma.on("selectionchange", () => {
   const textNodes = selectionNodes.filter(
     (node) => node.type === "TEXT"
   ) as TextNode[];
-  const textNode = textNodes[0];
-  const textData = createTextData(textNode);
 
+  const textNode = textNodes[0];
+  await loadFont(textNode);
+
+  const textData = createTextData(textNode);
   figma.ui.postMessage(textData);
 });
 
@@ -119,11 +154,20 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
   // Vertical Text WrapperのFrameかTextNodeかで分岐させる
   if (originNode.type === "FRAME") {
     const frameNode = originNode as FrameNode;
-    // ここまで処理が進んでいるならVertical Text Wrapperであると考えられるので、最初の子Frameだけ抽出する
-    const firstChild = frameNode.children[0] as FrameNode;
-    const childTextNode = firstChild.findChild((node) => {
+    // ここまで処理が進んでいるならVertical Text Wrapperであると考えられる
+    const childHasTextNode = frameNode.children.find((nodes) => {
+      if (nodes.type !== "FRAME") {
+        return false;
+      }
+      return nodes.findChild(
+        (node) => node.type === "TEXT" && node.characters.length !== 0
+      );
+    }) as FrameNode;
+
+    const childTextNode = childHasTextNode.findChild((node) => {
       return node.type === "TEXT";
     }) as TextNode | null;
+
     if (!childTextNode) return;
     textNode = childTextNode;
   } else {
@@ -131,14 +175,6 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
   }
 
   // cloneに備えてオリジナルのNodeを編集しておく
-  // 使用フォントの読み込み
-  // Ref: https://www.figma.com/plugin-docs/working-with-text
-  await Promise.all(
-    textNode
-      .getRangeAllFontNames(0, textNode.characters.length)
-      .map(figma.loadFontAsync)
-  );
-
   const convertLetterSpacingToLineHeight = (letterSpacing: number) => {
     return 100 + letterSpacing;
   };
@@ -157,32 +193,61 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
 
   // heightに応じてtextLinesをより細かく分割する
   const maxWordPerLine = (height: number, indent: number) => {
-    return Math.floor((height - indent) / wordHeight);
+    return Math.floor(height / wordHeight) - Math.ceil(indent / wordHeight);
   };
 
   if (data.height) {
     const height = data.height;
     const formattedTextLines = textLines.flatMap((textLine) => {
-      // インデントを含む1行あたりの最大文字数未満のテキストはそのまま返す
-      if (textLine.length < maxWordPerLine(height, data.paragraphIndent))
+      // インデントを含む1行あたりの最大文字数以下のテキストはそのまま返す
+      if (textLine.length <= maxWordPerLine(height, data.paragraphIndent)) {
         return textLine;
+      }
 
-      const indentWordCount = Math.floor(wordHeight / data.paragraphIndent);
+      const indentWordCount = Math.floor(data.paragraphIndent / wordHeight);
       const lineCount = Math.ceil(
         (textLine.length + indentWordCount) / maxWordPerLine(height, 0)
       );
 
       let newLines = [];
       for (let i = 0; i < lineCount; i++) {
-        const wordCount = (index: number) => {
-          return index === 0
-            ? maxWordPerLine(height, data.paragraphIndent)
-            : maxWordPerLine(height, 0);
+        const wordCountStart = (index: number) => {
+          if (index === 0) {
+            return 0;
+          }
+          if (index === 1) {
+            return maxWordPerLine(height, data.paragraphIndent);
+          }
+          if (index === 2) {
+            return (
+              maxWordPerLine(height, data.paragraphIndent) +
+              maxWordPerLine(height, 0)
+            );
+          }
+          return (
+            maxWordPerLine(height, data.paragraphIndent) +
+            maxWordPerLine(height, 0) +
+            maxWordPerLine(height, 0) * (index - 2)
+          );
         };
-        const sliceLine = textLine.slice(
-          wordCount(i) * i,
-          wordCount(i) * (i + 1)
-        );
+        const wordCountEnd = (index: number) => {
+          if (index === 0) {
+            return maxWordPerLine(height, data.paragraphIndent);
+          }
+          if (index === 1) {
+            return (
+              maxWordPerLine(height, data.paragraphIndent) +
+              maxWordPerLine(height, 0)
+            );
+          }
+          return (
+            maxWordPerLine(height, data.paragraphIndent) +
+            maxWordPerLine(height, 0) +
+            maxWordPerLine(height, 0) * (index - 1)
+          );
+        };
+
+        const sliceLine = textLine.slice(wordCountStart(i), wordCountEnd(i));
         newLines.push(sliceLine);
       }
       return newLines;
@@ -216,7 +281,6 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     return frame;
   };
 
-  // WIP
   const height = data.height ?? 0;
   const originTextLines = data.characters!.split("\n");
   // インデントを含む1行あたりの最大文字数以上のテキストを抽出する
