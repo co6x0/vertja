@@ -3,7 +3,7 @@ import { closePluginWithNotify, nonNullable } from "./utils";
 import type { DataFromUI } from "./types";
 
 // show plugin ui, set config
-figma.showUI(__html__, { themeColors: true, width: 384, height: 456 });
+figma.showUI(__html__, { themeColors: true, width: 384, height: 472 });
 
 // 使用フォントの読み込み
 // Ref: https://www.figma.com/plugin-docs/working-with-text
@@ -233,8 +233,6 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     const lastLineText = text.slice(lastLineStart - 1, text.length);
     return lastLineText;
   });
-  // 一番最後の行はparagraphSpacingを適応しなくて良いので削除する
-  multiLineLastTexts.pop();
 
   const textFrames = textNodes.map((textNode, index) => {
     const frame = createAutoLayoutFrame();
@@ -253,13 +251,19 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
       const lineWidth = (nodeFontSize * data.lineHeight.value) / 100;
       const frameHorizontalPadding = lineWidth - nodeFontSize;
 
-      if (isSingleLineText || isLastLineText) {
+      if (
+        multiLineLastTexts[multiLineLastTexts.length - 1] ===
+        textNode.characters
+      ) {
+        // 一番最後の行は適応しなくて良いので何もせずにこの分岐を終わらせる
+      } else if (isSingleLineText || isLastLineText) {
         frame.paddingLeft = frameHorizontalPadding / 2 + data.paragraphSpacing;
         frame.paddingRight = frameHorizontalPadding / 2;
       } else {
         frame.paddingLeft = frameHorizontalPadding / 2;
         frame.paddingRight = frameHorizontalPadding / 2;
       }
+      // 通常のlineHeight付与処理
     } else if (data.lineHeight.value) {
       const lineWidth = (nodeFontSize * data.lineHeight.value) / 100;
       const frameHorizontalPadding = lineWidth - nodeFontSize;
