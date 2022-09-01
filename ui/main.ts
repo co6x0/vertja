@@ -1,9 +1,12 @@
 import "./style.css";
+import "tippy.js/dist/tippy.css";
+import tippy, { createSingleton } from "tippy.js";
 import type { DataFromPlugin, DataFromUI } from "../types";
 
 const ButtonAction = document.getElementById(
   "ButtonAction"
 ) as HTMLButtonElement;
+const PluginNote = document.getElementById("PluginNote") as HTMLElement;
 const InputTextContent = document.getElementById(
   "InputTextContent"
 ) as HTMLTextAreaElement;
@@ -12,8 +15,8 @@ const InputHeight = document.getElementById("InputHeight") as HTMLInputElement;
 const InputLetterSpacing = document.getElementById(
   "InputLetterSpacing"
 ) as HTMLInputElement;
-const InputLineHeight = document.getElementById(
-  "InputLineHeight"
+const InputLineWidth = document.getElementById(
+  "InputLineWidth"
 ) as HTMLInputElement;
 const InputParagraphIndent = document.getElementById(
   "InputParagraphIndent"
@@ -21,6 +24,52 @@ const InputParagraphIndent = document.getElementById(
 const InputParagraphSpacing = document.getElementById(
   "InputParagraphSpacing"
 ) as HTMLInputElement;
+
+tippy.setDefaultProps({
+  duration: 100,
+  delay: [600, 0],
+  offset: [0, 8],
+  placement: "bottom",
+});
+createSingleton([
+  tippy(InputWidth.parentElement!, {
+    content: "Width",
+  }),
+  tippy(InputHeight.parentElement!, {
+    content: "Height",
+  }),
+  tippy(InputLetterSpacing.parentElement!, {
+    content: "Letter spacing",
+  }),
+  tippy(InputLineWidth.parentElement!, {
+    content: "Line width",
+  }),
+  tippy(InputParagraphIndent.parentElement!, {
+    content: "Paragraph indent",
+  }),
+  tippy(InputParagraphSpacing.parentElement!, {
+    content: "Paragraph spacing",
+  }),
+]);
+tippy(PluginNote, {
+  content: `
+  <p>
+    This plugin converts only text <strong>layout</strong> for vertical
+    writing. To make the glyphs suitable for vertical writing, enable
+    "Vertical alternates" and, if including alphabet and half glyphs, "Full
+    widths"
+    <a
+      href="https://help.figma.com/hc/en-us/articles/4913951097367-Use-OpenType-features"
+      target="_blank"
+      rel="noopener noreferrer"
+      >using OpenType features</a
+    >.
+  </p>
+  `,
+  allowHTML: true,
+  interactive: true,
+  maxWidth: 280,
+});
 
 let nodeId = "";
 
@@ -36,7 +85,7 @@ const createDataForPlugin = () => {
       unit: "PERCENT",
     },
     lineHeight: {
-      value: InputLineHeight.value ? Number(InputLineHeight.value) : undefined,
+      value: InputLineWidth.value ? Number(InputLineWidth.value) : undefined,
       unit: "PERCENT",
     },
     resizing: InputHeight.value ? undefined : "WIDTH_AND_HEIGHT",
@@ -79,7 +128,7 @@ onmessage = (event) => {
   InputLetterSpacing.value = data.letterSpacing.value
     ? formatNumberToString(data.letterSpacing.value, 3)
     : "";
-  InputLineHeight.value =
+  InputLineWidth.value =
     data.lineHeight.unit !== "AUTO"
       ? formatNumberToString(data.lineHeight.value, 3)
       : "";

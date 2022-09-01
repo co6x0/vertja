@@ -3,7 +3,7 @@ import { closePluginWithNotify, nonNullable } from "./utils";
 import type { DataFromUI } from "../types";
 
 // show plugin ui, set config
-figma.showUI(__html__, { themeColors: true, width: 384, height: 472 });
+figma.showUI(__html__, { themeColors: true, width: 296, height: 360 });
 
 // 使用フォントの読み込み
 // Ref: https://www.figma.com/plugin-docs/working-with-text

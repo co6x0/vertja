@@ -20,7 +20,10 @@
 
     <div class="node-design-ui">
       <div class="node-design-ui__number">
-        <label for="InputWidth">Width</label>
+        <label for="InputWidth">
+          <p class="visually-hidden">Width</p>
+          <span class="node-design-ui__number__icon">W</span>
+        </label>
         <input
           id="InputWidth"
           placeholder="Auto"
@@ -31,7 +34,10 @@
         />
       </div>
       <div class="node-design-ui__number">
-        <label for="InputHeight">Height</label>
+        <label for="InputHeight">
+          <p class="visually-hidden">Height</p>
+          <span class="node-design-ui__number__icon">H</span>
+        </label>
         <input
           id="InputHeight"
           placeholder="Auto"
@@ -44,31 +50,114 @@
 
     <div class="node-design-ui">
       <div class="node-design-ui__number">
-        <label for="InputLetterSpacing">Letter spacing</label>
+        <label for="InputLetterSpacing">
+          <p class="visually-hidden">Letter spacing</p>
+          <svg
+            width="32"
+            height="32"
+            viewbox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M10 8H22V9L10 9V8Z" fill="currentColor" />
+            <path d="M10 23L22 23V24L10 24V23Z" fill="currentColor" />
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M12.5483 20L15.3483 12L16.6519 12L19.4519 20L18.4983 20L17.7983 18H14.2019L13.5019 20L12.5483 20ZM16.0001 12.8622L17.4483 17H14.5519L16.0001 12.8622Z"
+              fill="currentColor"
+            />
+          </svg>
+        </label>
         <input id="InputLetterSpacing" placeholder="0" type="number" required />
-        <p>%</p>
+        <p class="node-design-ui__number__unit">%</p>
       </div>
       <div class="node-design-ui__number">
-        <label for="InputLineHeight">Line height</label>
+        <label for="InputLineWidth">
+          <p class="visually-hidden">Line width</p>
+          <svg
+            width="32"
+            height="32"
+            viewbox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M22 23V9H23V23H22Z" fill="currentColor" />
+            <path d="M9 23V9H10V23H9Z" fill="currentColor" />
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M12.5483 20L15.3483 12L16.6519 12L19.4519 20L18.4983 20L17.7983 18H14.2019L13.5019 20L12.5483 20ZM16.0001 12.8622L17.4483 17H14.5519L16.0001 12.8622Z"
+              fill="currentColor"
+            />
+          </svg>
+        </label>
         <!-- 計算ロジックが複雑になるのでひとまずmin: 100未満にならないようにする -->
         <input
-          id="InputLineHeight"
+          id="InputLineWidth"
           placeholder="Auto"
           type="number"
           min="100"
           required
         />
-        <p>%</p>
+        <p class="node-design-ui__number__unit">%</p>
       </div>
     </div>
 
     <div class="node-design-ui">
       <div class="node-design-ui__number">
-        <label for="InputParagraphIndent">Paragraph Indent</label>
+        <label for="InputParagraphIndent">
+          <p class="visually-hidden">Paragraph Indent</p>
+          <svg
+            width="32"
+            height="32"
+            viewbox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M24.6768 9.59244L23.9697 8.88534L22.3232 10.5318V5.23889H21.3232V10.5318L19.6768 8.88534L18.9697 9.59244L21.8232 12.446L24.6768 9.59244Z"
+              fill="currentColor"
+            />
+            <path
+              d="M22.3232 23.2389V14.2389H21.3232V23.2389H22.3232Z"
+              fill="currentColor"
+            />
+            <path
+              d="M18.3232 23.2389V9.23889H17.3232V23.2389H18.3232Z"
+              fill="currentColor"
+            />
+            <path
+              d="M14.3232 23.2389V9.23889H13.3232V23.2389H14.3232Z"
+              fill="currentColor"
+            />
+            <path
+              d="M10.3232 23.2389V9.23889H9.32324V23.2389H10.3232Z"
+              fill="currentColor"
+            />
+          </svg>
+        </label>
         <input id="InputParagraphIndent" placeholder="0" type="number" />
       </div>
       <div class="node-design-ui__number">
-        <label for="InputParagraphSpacing">Paragraph Spacing</label>
+        <label for="InputParagraphSpacing">
+          <p class="visually-hidden">Paragraph Spacing</p>
+          <svg
+            width="32"
+            height="32"
+            viewbox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M23 22.5V8.5H24V22.5H23Z" fill="currentColor" />
+            <path
+              d="M22.2071 15.5L19.8536 17.8536L19.1464 17.1464L20.2929 16H15.7071L16.8536 17.1464L16.1464 17.8536L13.7929 15.5L16.1464 13.1464L16.8536 13.8536L15.7071 15H20.2929L19.1464 13.8536L19.8536 13.1464L22.2071 15.5Z"
+              fill="currentColor"
+            />
+            <path d="M13 22.5H12V8.5H13V22.5Z" fill="currentColor" />
+            <path d="M9 22.5H8V8.5H9V22.5Z" fill="currentColor" />
+          </svg>
+        </label>
         <input id="InputParagraphSpacing" placeholder="0" type="number" />
       </div>
     </div>
@@ -82,23 +171,23 @@
       Convert / Sync
     </button>
 
-    <hr class="plugin-divider" />
-    <div class="plugin-note">
+    <div id="PluginNote" class="plugin-note">
       <svg
-        width="15"
-        height="15"
-        viewbox="0 0 15 15"
+        width="32"
+        height="32"
+        viewbox="0 0 32 32"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
-          d="M8.4449 0.608765C8.0183 -0.107015 6.9817 -0.107015 6.55509 0.608766L0.161178 11.3368C-0.275824 12.07 0.252503 13 1.10608 13H13.8939C14.7475 13 15.2758 12.07 14.8388 11.3368L8.4449 0.608765ZM7.4141 1.12073C7.45288 1.05566 7.54712 1.05566 7.5859 1.12073L13.9798 11.8488C14.0196 11.9154 13.9715 12 13.8939 12H1.10608C1.02849 12 0.980454 11.9154 1.02018 11.8488L7.4141 1.12073ZM6.8269 4.48611C6.81221 4.10423 7.11783 3.78663 7.5 3.78663C7.88217 3.78663 8.18778 4.10423 8.1731 4.48612L8.01921 8.48701C8.00848 8.766 7.7792 8.98664 7.5 8.98664C7.2208 8.98664 6.99151 8.766 6.98078 8.48701L6.8269 4.48611ZM8.24989 10.476C8.24989 10.8902 7.9141 11.226 7.49989 11.226C7.08567 11.226 6.74989 10.8902 6.74989 10.476C6.74989 10.0618 7.08567 9.72599 7.49989 9.72599C7.9141 9.72599 8.24989 10.0618 8.24989 10.476Z"
-          fill="currentColor"
           fill-rule="evenodd"
           clip-rule="evenodd"
-        ></path>
+          d="M9 16C9 19.866 12.134 23 16 23C19.866 23 23 19.866 23 16C23 12.134 19.866 9 16 9C12.134 9 9 12.134 9 16ZM16 8C11.5817 8 8 11.5817 8 16C8 20.4183 11.5817 24 16 24C20.4183 24 24 20.4183 24 16C24 11.5817 20.4183 8 16 8ZM16 11.7499C16.4142 11.7499 16.75 12.0857 16.75 12.4999V15.6259C16.75 16.0401 16.4142 16.3759 16 16.3759C15.5858 16.3759 15.25 16.0401 15.25 15.6259V12.4999C15.25 12.0857 15.5858 11.7499 16 11.7499ZM17 18.9999C17 18.4476 16.5523 17.9999 16 17.9999C15.4477 17.9999 15 18.4476 15 18.9999V19.0685C15 19.6208 15.4477 20.0685 16 20.0685C16.5523 20.0685 17 19.6208 17 19.0685V18.9999Z"
+          fill="currentColor"
+        />
       </svg>
-      <p>
+
+      <p class="visually-hidden">
         This plugin converts only text <strong>layout</strong> for vertical
         writing. To make the glyphs suitable for vertical writing, enable
         "Vertical alternates" and, if including alphabet and half glyphs, "Full

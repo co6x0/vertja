@@ -3,10 +3,39 @@ body {
   font-weight: 300;
   background-color: var(--figma-color-bg);
   color: var(--figma-color-text);
-  padding: 12px;
+  padding: 8px;
 }
 a {
   color: var(--figma-color-text-brand);
+}
+
+.visually-hidden {
+  position: fixed !important;
+  top: 0px !important;
+  left: 0px !important;
+  width: 4px !important;
+  height: 4px !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+.tippy-box {
+  background-color: #1c1c1c !important;
+  font-size: 11px !important;
+  box-shadow: 0 2px 8px #1c1c1c;
+}
+.tippy-arrow {
+  color: #1c1c1c !important;
+  font-size: 10px !important;
+}
+.tippy-arrow::before{
+top: -6px !important;
+border-width: 0 6px 6px !important;
 }
 
 .plugin-divider {
@@ -17,15 +46,15 @@ a {
 }
 
 .plugin-note {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 .plugin-note > svg {
   color: var(--figma-color-text-secondary);
   display: flex;
-  width: 15px;
-  height: 15px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
 }
 .plugin-note > p {
@@ -58,12 +87,14 @@ a {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 4px;
+  position: relative;
+}
+.node-design-ui__number > input {
+  padding-right: 24px;
 }
 .node-design-ui__number > label,
 .node-design-ui__textarea > label {
   display: inline-block;
-  width: 88px;
   flex-shrink: 0;
   color: var(--figma-color-text-secondary);
   font-size: 0.7rem;
@@ -74,9 +105,20 @@ a {
   color: var(--figma-color-text-primary);
   font-size: 0.7rem;
 }
+.node-design-ui__number__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+.node-design-ui__number__unit {
+  position: absolute;
+  right: 8px;
+}
 
 .button-action {
-  margin-top: 20px;
+  margin-top: 12px;
   font-size: 0.7rem;
   width: 100%;
   padding: 12px 8px;
