@@ -27,7 +27,12 @@ a {
 .tippy-box {
   background-color: #1c1c1c !important;
   font-size: 11px !important;
-  box-shadow: 0 2px 8px #1c1c1c;
+  box-shadow: 0 2px 12px -4px rgba(0,0,0,0.8) !important;
+  border-radius: 2px !important;
+  line-height: 1.75 !important;
+}
+.tippy-content a {
+  color: #7cc4f8;
 }
 .tippy-arrow {
   color: #1c1c1c !important;

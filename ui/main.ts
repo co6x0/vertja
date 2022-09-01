@@ -27,7 +27,7 @@ const InputParagraphSpacing = document.getElementById(
 
 tippy.setDefaultProps({
   duration: 100,
-  delay: [600, 0],
+  delay: [1000, 0],
   offset: [0, 8],
   placement: "bottom",
 });
