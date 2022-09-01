@@ -4,16 +4,18 @@
   "description": "Figma Plugin for vertically written Japanese",
   "main": "index.js",
   "scripts": {
-    "build": "tsc -p ./tsconfig.json --noEmit && esbuild ./src/index.ts --bundle --minify --outfile=./index.js",
-    "watch": "tsc -p ./tsconfig.json --watch --noEmit & esbuild ./src/index.ts --bundle --minify --outfile=./index.js --watch",
-    "_build": "tsc -p tsconfig.json",
-    "_watch": "npm run build -- --watch"
+    "build:plugin": "tsc -p ./plugin/tsconfig.json --noEmit && esbuild ./plugin/index.ts --bundle --minify --outfile=./dist/code.js",
+    "build:ui": "tsc -p ./ui/tsconfig.json --noEmit && vite build --minify esbuild",
+    "watch:plugin": "tsc -p ./plugin/tsconfig.json --watch --noEmit & esbuild ./plugin/index.ts --bundle --minify --outfile=./dist/code.js --watch",
+    "watch:ui": "tsc -p ./ui/tsconfig.json --watch --noEmit & vite build --minify esbuild --watch"
   },
   "author": "",
   "license": "",
   "devDependencies": {
     "@figma/plugin-typings": "*",
     "esbuild": "^0.15.6",
-    "typescript": "*"
+    "typescript": "^4.8.2",
+    "vite": "^3.0.9",
+    "vite-plugin-singlefile": "^0.11.1"
   }
 }

@@ -1,6 +1,6 @@
 import { createTextData, getTextNode } from "./domains";
 import { closePluginWithNotify, nonNullable } from "./utils";
-import type { DataFromUI } from "./types";
+import type { DataFromUI } from "../types";
 
 // show plugin ui, set config
 figma.showUI(__html__, { themeColors: true, width: 384, height: 472 });

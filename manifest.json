@@ -2,10 +2,8 @@
   "name": "Vertja",
   "id": "1146329653004129345",
   "api": "1.0.0",
-  "main": "index.js",
   "editorType": ["figma"],
-  "ui": "ui.html",
-  "relaunchButtons": [
-    { "command": "edit", "name": "Edit Vertical Text Settings" }
-  ]
+  "main": "dist/code.js",
+  "ui": "dist/index.html",
+  "relaunchButtons": [{ "command": "edit", "name": "Edit Vertja settings" }]
 }
