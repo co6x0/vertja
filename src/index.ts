@@ -223,10 +223,14 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     })
     .filter(nonNullable);
   // 複数行を持つ段落の一番最後の行のテキストを抽出する
+  const indentWordCount = Math.floor(data.paragraphIndent / wordHeight);
   const multiLineLastTexts = aboveMaxWordTexts.map((text: string) => {
-    const lineCount = Math.ceil(text.length / maxWordPerLine(height, 0));
-    const lastLineStart = (lineCount - 1) * maxWordPerLine(height, 0);
-    const lastLineText = text.slice(lastLineStart, text.length);
+    const lineCount = Math.ceil(
+      (text.length + indentWordCount) / maxWordPerLine(height, 0)
+    );
+    const lastLineStart =
+      (lineCount - 1) * maxWordPerLine(height, 0) - indentWordCount;
+    const lastLineText = text.slice(lastLineStart - 1, text.length);
     return lastLineText;
   });
   // 一番最後の行はparagraphSpacingを適応しなくて良いので削除する
@@ -236,17 +240,18 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     const frame = createAutoLayoutFrame();
     frame.name = String(index + 1);
 
+    // １行だけの段落
+    const isSingleLineText = lessMaxWordTexts.some(
+      (singleLineText) => singleLineText === textNode.characters
+    );
+    const isLastLineText = multiLineLastTexts.some(
+      (lastLineText) => lastLineText === textNode.characters
+    );
+
     // 段落の最後の行にparagraphSpacingを適応する
     if (data.height && data.lineHeight.value && data.paragraphSpacing !== 0) {
       const lineWidth = (nodeFontSize * data.lineHeight.value) / 100;
       const frameHorizontalPadding = lineWidth - nodeFontSize;
-      // １行だけの段落
-      const isSingleLineText = lessMaxWordTexts.some(
-        (singleLineText) => singleLineText === textNode.characters
-      );
-      const isLastLineText = multiLineLastTexts.some(
-        (lastLineText) => lastLineText === textNode.characters
-      );
 
       if (isSingleLineText || isLastLineText) {
         frame.paddingLeft = frameHorizontalPadding / 2 + data.paragraphSpacing;
@@ -262,7 +267,8 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
       frame.paddingRight = frameHorizontalPadding / 2;
     }
 
-    if (data.height && data.paragraphIndent !== 0) {
+    // インデントの追加
+    if (data.height && data.paragraphIndent !== 0 && !isLastLineText) {
       // インデント込の1行あたりの文字数が同じ場合インデント分のpaddingを追加する
       if (
         textNode.characters.length ===
@@ -270,8 +276,10 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
       ) {
         frame.paddingTop = data.paragraphIndent;
       }
-    } else if (data.paragraphIndent !== 0) {
-      frame.paddingTop = data.paragraphIndent;
+      // 一行だけの段落
+      if (isSingleLineText) {
+        frame.paddingTop = data.paragraphIndent;
+      }
     }
 
     frame.appendChild(textNode);
@@ -292,7 +300,6 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
   refNode.remove();
 
   // AutoLayoutFrameをフォーカスする
-  figma.viewport.scrollAndZoomIntoView([wrapperFrame]);
   figma.currentPage.selection = [wrapperFrame];
 
   // data.nodeIdを上で更新しているのでUI側にも反映させる
