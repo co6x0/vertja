@@ -258,14 +258,16 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
       const lineWidth = (nodeFontSize * data.lineWidth.value) / 100;
       const frameHorizontalPadding = lineWidth - nodeFontSize;
 
-      if (
-        multiLineLastTexts[multiLineLastTexts.length - 1] ===
-        textNode.characters
-      ) {
-        // 一番最後の行は適応しなくて良いので何もせずにこの分岐を終わらせる
+      // 最終行
+      if (textNodes[textNodes.length - 1].characters === textNode.characters) {
+        frame.paddingLeft = pseudoBodyWidth / 2 + frameHorizontalPadding / 2;
+        frame.paddingRight = pseudoBodyWidth / 2 + frameHorizontalPadding / 2;
+        // 1行のみの段落か段落の最後の行
       } else if (isSingleLineText || isLastLineText) {
         frame.paddingLeft =
-          nodeFontSize / 2 + frameHorizontalPadding / 2 + data.paragraphSpacing;
+          pseudoBodyWidth / 2 +
+          frameHorizontalPadding / 2 +
+          data.paragraphSpacing;
         frame.paddingRight = pseudoBodyWidth / 2 + frameHorizontalPadding / 2;
       } else {
         frame.paddingLeft = pseudoBodyWidth / 2 + frameHorizontalPadding / 2;
