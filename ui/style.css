@@ -123,7 +123,7 @@ border-width: 0 6px 6px !important;
 }
 
 .button-action {
-  margin-top: 12px;
+  margin-top: 16px;
   font-size: 0.7rem;
   width: 100%;
   padding: 12px 8px;
@@ -152,7 +152,7 @@ textarea {
   color: var(--figma-color-text-primary);
   width: 100%;
   max-width: 100%;
-  padding: 12px 8px;
+  padding: 8px;
   border: solid 1px transparent;
   border-radius: 2px;
   background: transparent;
@@ -161,7 +161,6 @@ textarea {
   font-family: Inter, sans-serif;
   border: solid 1px var(--figma-color-border);
   border-radius: 2px;
-  padding: 8px;
 }
 input::placeholder,
 textarea::placeholder {
