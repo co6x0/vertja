@@ -89,7 +89,7 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
   if (!data) return;
   if (!data.characters) return;
 
-  const refNode = figma.getNodeById(data.nodeId);
+  const refNode = await figma.getNodeByIdAsync(data.nodeId);
   if (!refNode) return;
   if (refNode.type !== "FRAME" && refNode.type !== "TEXT") return;
 
@@ -135,7 +135,7 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
         (textLine.length + indentWordCount) / maxWordPerLine(height, 0)
       );
 
-      let newLines = [];
+      const newLines = [];
       for (let i = 0; i < lineCount; i++) {
         const wordCountStart = (index: number) => {
           if (index === 0) {

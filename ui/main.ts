@@ -89,8 +89,8 @@ const createDataForPlugin = () => {
       unit: "PERCENT",
     },
     resizing: InputHeight.value ? undefined : "WIDTH_AND_HEIGHT",
-    paragraphIndent: Number(InputParagraphIndent.value) ?? 0,
-    paragraphSpacing: Number(InputParagraphSpacing.value) ?? 0,
+    paragraphIndent: Number(InputParagraphIndent.value) || 0,
+    paragraphSpacing: Number(InputParagraphSpacing.value) || 0,
   };
   return data;
 };
