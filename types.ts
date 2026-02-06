@@ -5,7 +5,7 @@ export type DataFromUI = {
   characters?: string;
   width?: number;
   height?: number;
-  lineHeight: {
+  lineWidth: {
     value?: number;
     unit: "PERCENT";
   };
@@ -23,7 +23,7 @@ export type DataFromPlugin = {
   characters: string;
   width: number;
   height: number;
-  lineHeight: LineHeight;
+  lineWidth: LineHeight;
   letterSpacing: LetterSpacing;
   resizing: TextNode["textAutoResize"];
   paragraphIndent: number;

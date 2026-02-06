@@ -108,6 +108,7 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     value: convertLetterSpacingToLineHeight(data.letterSpacing.value),
   };
   textNode.paragraphIndent = 0;
+  textNode.textAlignHorizontal = "CENTER";
 
   // data.charactersの行ごとにTextNodeを分割する
   const nodeFontSize = textNode.fontSize as number;
@@ -185,9 +186,14 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     const clonedNode = textNode.clone();
     clonedNode.textAutoResize = "HEIGHT";
     clonedNode.characters = textLine;
-    clonedNode.resize(nodeFontSize, clonedNode.height);
+    // 全角文字以外に対応するためにwidthを2にする
+    // 本当は0にしたいが、resize()は1以上にしかできないよう
+    clonedNode.resize(2, clonedNode.height);
     return clonedNode;
   });
+  // PseudoBody: 仮想ボディのことを指す
+  // 2は上で設定した数値
+  const pseudoBodyWidth = nodeFontSize - 2;
 
   // lineHeightに対応するためにAutoLayoutのFrame[]を作成し、その中にTextNodeを入れる
   const createAutoLayoutFrame = () => {
@@ -197,6 +203,7 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     frame.counterAxisAlignItems = "MIN";
     frame.primaryAxisSizingMode = "AUTO";
     frame.counterAxisSizingMode = data.height ? "FIXED" : "AUTO";
+    // 0にしたwidthの分をpaddingで確保する
     frame.paddingLeft = 0;
     frame.paddingRight = 0;
     frame.x = refNode.x;
@@ -247,28 +254,31 @@ figma.ui.on("message", async (event: { data?: DataFromUI }) => {
     );
 
     // 段落の最後の行にparagraphSpacingを適応する
-    if (data.height && data.lineHeight.value && data.paragraphSpacing !== 0) {
-      const lineWidth = (nodeFontSize * data.lineHeight.value) / 100;
+    if (data.height && data.lineWidth.value && data.paragraphSpacing !== 0) {
+      const lineWidth = (nodeFontSize * data.lineWidth.value) / 100;
       const frameHorizontalPadding = lineWidth - nodeFontSize;
 
-      if (
-        multiLineLastTexts[multiLineLastTexts.length - 1] ===
-        textNode.characters
-      ) {
-        // 一番最後の行は適応しなくて良いので何もせずにこの分岐を終わらせる
+      // 最終行
+      if (textNodes[textNodes.length - 1].characters === textNode.characters) {
+        frame.paddingLeft = pseudoBodyWidth / 2 + frameHorizontalPadding / 2;
+        frame.paddingRight = pseudoBodyWidth / 2 + frameHorizontalPadding / 2;
+        // 1行のみの段落か段落の最後の行
       } else if (isSingleLineText || isLastLineText) {
-        frame.paddingLeft = frameHorizontalPadding / 2 + data.paragraphSpacing;
-        frame.paddingRight = frameHorizontalPadding / 2;
+        frame.paddingLeft =
+          pseudoBodyWidth / 2 +
+          frameHorizontalPadding / 2 +
+          data.paragraphSpacing;
+        frame.paddingRight = pseudoBodyWidth / 2 + frameHorizontalPadding / 2;
       } else {
-        frame.paddingLeft = frameHorizontalPadding / 2;
-        frame.paddingRight = frameHorizontalPadding / 2;
+        frame.paddingLeft = pseudoBodyWidth / 2 + frameHorizontalPadding / 2;
+        frame.paddingRight = pseudoBodyWidth / 2 + frameHorizontalPadding / 2;
       }
-      // 通常のlineHeight付与処理
-    } else if (data.lineHeight.value) {
-      const lineWidth = (nodeFontSize * data.lineHeight.value) / 100;
+      // 通常のlineWidth付与処理
+    } else if (data.lineWidth.value) {
+      const lineWidth = (nodeFontSize * data.lineWidth.value) / 100;
       const frameHorizontalPadding = lineWidth - nodeFontSize;
-      frame.paddingLeft = frameHorizontalPadding / 2;
-      frame.paddingRight = frameHorizontalPadding / 2;
+      frame.paddingLeft = pseudoBodyWidth / 2 + frameHorizontalPadding / 2;
+      frame.paddingRight = pseudoBodyWidth / 2 + frameHorizontalPadding / 2;
     }
 
     // インデントの追加

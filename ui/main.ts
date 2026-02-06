@@ -84,7 +84,7 @@ const createDataForPlugin = () => {
       value: InputLetterSpacing.value ? Number(InputLetterSpacing.value) : 0,
       unit: "PERCENT",
     },
-    lineHeight: {
+    lineWidth: {
       value: InputLineWidth.value ? Number(InputLineWidth.value) : undefined,
       unit: "PERCENT",
     },
@@ -129,8 +129,8 @@ onmessage = (event) => {
     ? formatNumberToString(data.letterSpacing.value, 3)
     : "";
   InputLineWidth.value =
-    data.lineHeight.unit !== "AUTO"
-      ? formatNumberToString(data.lineHeight.value, 3)
+    data.lineWidth.unit !== "AUTO"
+      ? formatNumberToString(data.lineWidth.value, 3)
       : "";
   InputParagraphIndent.value = formatNumberToString(data.paragraphIndent, 3);
   InputParagraphSpacing.value = formatNumberToString(data.paragraphSpacing, 3);

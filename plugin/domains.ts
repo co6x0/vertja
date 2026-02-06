@@ -1,11 +1,22 @@
-export const createTextData = (textNode: TextNode) => {
+import type { DataFromPlugin } from "../types";
+
+export const createTextData = (
+  textNode: TextNode
+): DataFromPlugin | undefined => {
+  if (
+    textNode.lineHeight === figma.mixed ||
+    textNode.letterSpacing === figma.mixed
+  ) {
+    figma.notify("Selecting text has mixed lineHeight or letterSpacing");
+    return;
+  }
   const data = {
     nodeId: textNode.id,
     characters: textNode.characters,
     // 縦書きにするとwidthとheightの関係が反転するため
     width: textNode.height,
     height: textNode.width,
-    lineHeight: textNode.lineHeight,
+    lineWidth: textNode.lineHeight,
     letterSpacing: textNode.letterSpacing,
     resizing: textNode.textAutoResize,
     paragraphIndent: textNode.paragraphIndent,
