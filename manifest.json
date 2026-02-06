@@ -5,5 +5,7 @@
   "editorType": ["figma"],
   "main": "dist/code.js",
   "ui": "dist/index.html",
-  "relaunchButtons": [{ "command": "edit", "name": "Edit Vertja settings" }]
+  "relaunchButtons": [{ "command": "edit", "name": "Edit Vertja settings" }],
+  "networkAccess": { "allowedDomains": ["none"] },
+  "documentAccess": "dynamic-page"
 }
